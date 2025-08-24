@@ -31,11 +31,11 @@ int main() {
     set<vector<double>> valid_trios = delaunay.get_valid_triangles();
 
     cout << "\nDelaunay Triangles (triplets of points):\n";
-    for (const auto& tri : valid_trios) {
-        cout << "(" << tri[0] << ", " << tri[1] << "), "
-                  << "(" << tri[2] << ", " << tri[3] << "), "
-                  << "(" << tri[4] << ", " << tri[5] << ")\n";
-    }
+    // for (const auto& tri : valid_trios) {
+    //     cout << "(" << tri[0] << ", " << tri[1] << "), "
+    //               << "(" << tri[2] << ", " << tri[3] << "), "
+    //               << "(" << tri[4] << ", " << tri[5] << ")\n";
+    // }
     
 
     delaunay.export_to_csv("delaunay_output.csv");

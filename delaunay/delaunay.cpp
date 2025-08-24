@@ -1,7 +1,24 @@
 #include "delaunay.hpp"
+#include <iomanip>
+
+void print_progress(double progress) {
+    int barWidth = 50;
+    std::cout << "\r[";
+    int pos = static_cast<int>(barWidth * progress);
+    for (int i = 0; i < barWidth; ++i) {
+        if (i < pos) std::cout << "=";
+        else if (i == pos) std::cout << ">";
+        else std::cout << " ";
+    }
+    std::cout << "] " << std::fixed << std::setprecision(1) << progress * 100.0 << " %";
+    std::cout.flush();
+}
 
 Delaunay::Delaunay(vector<vector<double>> &coordinates){
     int n = coordinates.size();
+    long long total = (long long)n * (n - 1) * (n - 2) / 6;
+    long long count = 0;
+
     for (int i =0 ;i<n;++i){
         for (int j =i+1 ;j<n;++j){
             for (int k=j+1 ;k<n;++k){
@@ -10,9 +27,15 @@ Delaunay::Delaunay(vector<vector<double>> &coordinates){
                 trio.insert(trio.end(),coordinates[j].begin(),coordinates[j].end());
                 trio.insert(trio.end(),coordinates[k].begin(),coordinates[k].end());
                 triangles.insert(trio);
+
+                ++count;
+                if (count % 1000 == 0 || count == total) {
+                    print_progress((double)count / total);
+                }
             }
         }
     }
+    std::cout << "\n";
 };
 
 Circle Delaunay::circumcircle(const vector<double>& tri){
@@ -49,6 +72,8 @@ bool Delaunay::contains_other(const Circle& c, const vector<double>& tri ,const 
 };
 
 void Delaunay::filter_delaunay_trios(vector<vector<double>> &coordinates){
+    long long total = triangles.size();
+    long long count = 0;
 
     for (const std::vector<double>& tri : triangles) {
         Circle c = circumcircle(tri);
@@ -56,7 +81,13 @@ void Delaunay::filter_delaunay_trios(vector<vector<double>> &coordinates){
         if (!contains_other(c, tri, coordinates)) {
             valid_triangles.insert(tri);
         }
+
+        ++count;
+        if (count % 500 == 0 || count == total) {
+            print_progress((double)count / total);
+        }
     }
+    std::cout << "\n";
 };
 
 set<vector<double>> Delaunay::get_valid_triangles(){
@@ -79,4 +110,3 @@ void Delaunay::export_to_csv(const std::string& filename) {
 
     file.close();
 }
-

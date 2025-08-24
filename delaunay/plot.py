@@ -2,8 +2,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 import numpy as np
+from matplotlib.animation import FuncAnimation, PillowWriter
 
-df = pd.read_csv('delaunay_output.csv')
+df = pd.read_csv('path_to_csv_on_1185_trios') #we are not running on all the trios as computing them is too much computationally expensive 
 
 points = []
 triangles = []
@@ -25,26 +26,41 @@ for _, row in df.iterrows():
 points = np.array(points)
 triangles = np.array(triangles)
 
-plt.figure(figsize=(12, 10))
-triang = tri.Triangulation(points[:, 0], points[:, 1], triangles)
+def side_length(p1, p2):
+    return np.linalg.norm(p1 - p2)
 
+max_length_values = np.linspace(10, 200, 30)  
+
+fig, ax = plt.subplots(figsize=(10, 8))
 cmap = plt.get_cmap('tab20')
-np.random.seed(42) 
-face_colors = np.random.permutation(len(triangles)) % cmap.N
+np.random.seed(42)
+
+def update(frame):
+    ax.clear()
+    limit = max_length_values[frame]
+
+    filtered_triangles = []
+    for tri_indices in triangles:
+        p1, p2, p3 = points[tri_indices]
+        lengths = [side_length(p1, p2), side_length(p2, p3), side_length(p3, p1)]
+        if all(l <= limit for l in lengths):
+            filtered_triangles.append(tri_indices)
+
+    if len(filtered_triangles) == 0:
+        return
+
+    triang = tri.Triangulation(points[:, 0], points[:, 1], np.array(filtered_triangles))
+    face_colors = np.random.permutation(len(filtered_triangles)) % cmap.N
+
+    ax.tripcolor(triang, facecolors=face_colors, edgecolors='black', linewidth=1.0, cmap=cmap, alpha=0.8)
+    ax.set_title(f"Side Length Filtering (limit = {limit:.1f})", fontsize=16, weight='bold')
+    ax.set_aspect('equal', adjustable='box')
+    ax.axis("off")
+
+ani = FuncAnimation(fig, update, frames=len(max_length_values), interval=500, repeat=True)
 
 
-plt.tripcolor(triang, facecolors=face_colors, edgecolors='black', linewidth=1.2, cmap=cmap, alpha=0.75)
-
-# # Plot points with shadow and labels
-# plt.scatter(points[:, 0], points[:, 1], s=75, color='white', edgecolor='black', zorder=10)
-# for i, (x, y) in enumerate(points):
-#     plt.text(x, y, f'{i}', fontsize=9, ha='center', va='center', color='black', weight='bold', zorder=11)
-
-plt.title("Delaunay Triangulation with Colored Triangles", fontsize=18, weight='bold')
-plt.xlabel("X Coordinate", fontsize=14)
-plt.ylabel("Y Coordinate", fontsize=14)
-plt.grid(True, linestyle='--', alpha=0.5)
-plt.gca().set_aspect('equal', adjustable='box')
-plt.tight_layout()
+writer = PillowWriter(fps=2)  
+ani.save("side_length_simulation.gif", writer=writer)
 
 plt.show()
